@@ -35,9 +35,8 @@ def bypass_censorship(canvas):
     # Function to bypass censorship
     pass
 
-def rotate_image(canvas):
-    # Function to rotate image
-    pass
+
+
 
 def crop_image(canvas):
     # Function to crop image
@@ -100,6 +99,7 @@ def update_contrast_value(canvas, contrast_slider, contrast_value_label):
     contrast_value = contrast_slider.get()
     contrast_value_label.config(text=str(int(contrast_value)))
     change_contrast(canvas, contrast_value)
+
 
 def reset_brightness(canvas, brightness_slider, brightness_value_label):
     brightness_slider.set(50)
