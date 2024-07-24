@@ -1,9 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 from handlers import (
-    add_image, auto_invert, bypass_censorship, rotate_image, crop_image,save_current_edit,
-    show_brightness_controls, show_contrast_controls, change_saturation, apply_color_mask, detect_faces,reset_brightness,reset_contrast
+    add_image, auto_invert, bypass_censorship, crop_image, save_current_edit,
+    show_brightness_controls, show_contrast_controls, change_saturation, apply_color_mask, detect_faces, reset_brightness, reset_contrast
 )
+from rotate_controls import change_rotate, rotate_image, update_rotate_value, reset_rotate, save_current_edit
 
 def setup_ui(root):
     # Create the main frame to hold the left and canvas frames
@@ -42,12 +43,20 @@ def setup_ui(root):
     save_contrast_button = ttk.Button(bottom_frame, text="✓", width=3,
                                       command=lambda: save_current_edit(canvas))
 
-    
+    # Rotate controls
+    rotate_slider = ttk.Scale(bottom_frame, from_=0, to=360, orient=tk.HORIZONTAL, length=700)
+    rotate_value_label = ttk.Label(bottom_frame, text="0", style="TLabel")
+    reset_rotate_button = ttk.Button(bottom_frame, text="Reset Rotate", 
+                                     command=lambda: reset_rotate(canvas, rotate_slider, rotate_value_label))
+    save_rotate_button = ttk.Button(bottom_frame, text="✓", width=3,
+                                    command=lambda: save_current_edit(canvas))
 
-    # Pack sliders and labels (initially hidden)
+    rotate_slider.config(command=lambda v: update_rotate_value(canvas, rotate_slider, rotate_value_label))
+
     sliders = {
         "brightness": (brightness_slider, brightness_value_label, reset_brightness_button, save_brightness_button),
-        "contrast": (contrast_slider, contrast_value_label, reset_contrast_button, save_contrast_button)
+        "contrast": (contrast_slider, contrast_value_label, reset_contrast_button, save_contrast_button),
+        "rotate": (rotate_slider, rotate_value_label, reset_rotate_button, save_rotate_button)
     }
 
     # Add buttons and bind them to the functions
@@ -55,7 +64,7 @@ def setup_ui(root):
         ("Open Image", lambda: add_image(canvas)),
         ("Auto Invert", lambda: auto_invert(canvas)),
         ("Bypass Censorship", lambda: bypass_censorship(canvas)),
-        ("Rotate Image", lambda: rotate_image(canvas)),
+        ("Rotate Image", lambda: rotate_image(canvas, bottom_frame, sliders)),
         ("Crop Image", lambda: crop_image(canvas)),
         ("Change Brightness", lambda: show_brightness_controls(canvas, bottom_frame, sliders)),
         ("Change Contrast", lambda: show_contrast_controls(canvas, bottom_frame, sliders)),

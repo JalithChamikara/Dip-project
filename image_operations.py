@@ -31,3 +31,6 @@ def change_contrast(canvas, contrast_value):
         canvas.image = ImageTk.PhotoImage(enhanced_image)
         canvas.delete("all")
         canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+
+
+
