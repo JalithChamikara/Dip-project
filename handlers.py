@@ -79,8 +79,62 @@ def bypass_censorship(canvas):
         canvas.update_idletasks()  # Force canvas update
 
 def crop_image(canvas):
-    # Function to crop image
-    pass
+    if hasattr(canvas, 'original_image'):
+        canvas.bind("<ButtonPress-1>", lambda event: start_crop(event, canvas))
+        canvas.bind("<B1-Motion>", lambda event: draw_crop_rect(event, canvas))
+        canvas.bind("<ButtonRelease-1>", lambda event: finish_crop(event, canvas))
+
+def start_crop(event, canvas):
+    canvas.crop_start_x = event.x
+    canvas.crop_start_y = event.y
+    canvas.crop_rect = canvas.create_rectangle(canvas.crop_start_x, canvas.crop_start_y, event.x, event.y, outline='red')
+
+def draw_crop_rect(event, canvas):
+    canvas.coords(canvas.crop_rect, canvas.crop_start_x, canvas.crop_start_y, event.x, event.y)
+
+def finish_crop(event, canvas):
+    canvas.crop_end_x = event.x
+    canvas.crop_end_y = event.y
+    canvas.delete(canvas.crop_rect)
+
+    if hasattr(canvas, 'original_image'):
+        if not hasattr(canvas, 'crop_history'):
+            canvas.crop_history = []
+        canvas.crop_history.append(canvas.original_image.copy())
+
+        pil_image = canvas.original_image.copy()
+        width, height = pil_image.size
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+
+        crop_box = (
+            int(canvas.crop_start_x * width / canvas_width),
+            int(canvas.crop_start_y * height / canvas_height),
+            int(canvas.crop_end_x * width / canvas_width),
+            int(canvas.crop_end_y * height / canvas_height)
+        )
+
+        cropped_image = pil_image.crop(crop_box)
+
+        canvas.original_image = cropped_image
+        canvas.image = ImageTk.PhotoImage(cropped_image)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+
+def undo_crop(canvas):
+    if hasattr(canvas, 'crop_history') and canvas.crop_history:
+        canvas.original_image = canvas.crop_history.pop()
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+
+        pil_image = canvas.original_image.copy()
+        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
+
+        canvas.image = ImageTk.PhotoImage(pil_image)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+
+
 
 def change_saturation(canvas):
     # Function to change saturation
