@@ -1,6 +1,6 @@
 from random import randint
 from tkinter import filedialog, ttk
-from PIL import Image, ImageTk,ImageOps
+from PIL import Image, ImageTk,ImageOps,ImageFilter
 import cv2
 import numpy as np
 from image_operations import (
@@ -48,21 +48,33 @@ def auto_invert(canvas):
         canvas.update_idletasks()  # Force canvas update
 
 def add_censorship(canvas):
-    if hasattr(canvas, 'image'):
+      if hasattr(canvas, 'image'):
         pil_image = canvas.original_image.copy()
         pil_image = pil_image.convert("RGB")
-        pixel_data = pil_image.load()
-        width, height = pil_image.size
-
-        for y in range(height):
-            for x in range(width):
-                if randint(0, 100) < 25:  # 25% chance to censor a pixel
-                    pixel_data[x, y] = (0, 0, 0)
-
-        # Resize inverted image to fit into canvas while maintaining aspect ratio
+        
+        # Convert PIL image to OpenCV format
+        open_cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+        
+        # Load the pre-trained Haar Cascade classifier for face detection
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        
+        # Detect faces in the image
+        gray = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+        
+        # Apply blur to each face region
+        for (x, y, w, h) in faces:
+            face = open_cv_image[y:y+h, x:x+w]
+            face = cv2.GaussianBlur(face, (99, 99), 30)  # Adjust kernel size for more or less blur
+            open_cv_image[y:y+h, x:x+w] = face
+        
+        # Convert OpenCV image back to PIL format
+        pil_image = Image.fromarray(cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2RGB))
+        
+        # Resize the blurred image to fit into canvas while maintaining aspect ratio
         canvas_width = canvas.winfo_width()
         canvas_height = canvas.winfo_height()
-        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)            
+        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
 
         canvas.image = ImageTk.PhotoImage(pil_image)
         canvas.delete("all")
