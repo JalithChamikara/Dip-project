@@ -53,6 +53,11 @@ def setup_ui(root):
 
     rotate_slider.config(command=lambda v: update_rotate_value(canvas, rotate_slider, rotate_value_label))
 
+    # Create the undo crop button
+    undo_crop_button = ttk.Button(bottom_frame, text="Undo Crop", command=lambda: undo_crop(canvas))
+    undo_crop_button.pack(side="left", padx=10)
+    undo_crop_button.pack_forget()  # Hide initially
+
     sliders = {
         "brightness": (brightness_slider, brightness_value_label, reset_brightness_button, save_brightness_button),
         "contrast": (contrast_slider, contrast_value_label, reset_contrast_button, save_contrast_button),
@@ -84,4 +89,5 @@ def setup_ui(root):
     }, {
         "brightness": reset_brightness_button,
         "contrast": reset_contrast_button,
+        "undo_crop": undo_crop_button
     }

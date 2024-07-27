@@ -84,6 +84,10 @@ def add_censorship(canvas):
 
 def crop_image(canvas):
     if hasattr(canvas, 'original_image'):
+        # Set cursor to plus sign
+        canvas.config(cursor="plus")
+
+        # Bind mouse events for cropping
         canvas.bind("<ButtonPress-1>", lambda event: start_crop(event, canvas))
         canvas.bind("<B1-Motion>", lambda event: draw_crop_rect(event, canvas))
         canvas.bind("<ButtonRelease-1>", lambda event: finish_crop(event, canvas))
@@ -100,6 +104,9 @@ def finish_crop(event, canvas):
     canvas.crop_end_x = event.x
     canvas.crop_end_y = event.y
     canvas.delete(canvas.crop_rect)
+
+    # Restore the cursor to default
+    canvas.config(cursor="")
 
     if hasattr(canvas, 'original_image'):
         if not hasattr(canvas, 'crop_history'):
@@ -124,7 +131,7 @@ def finish_crop(event, canvas):
         canvas.image = ImageTk.PhotoImage(cropped_image)
         canvas.delete("all")
         canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
-
+        
 def undo_crop(canvas):
     if hasattr(canvas, 'crop_history') and canvas.crop_history:
         canvas.original_image = canvas.crop_history.pop()
@@ -138,6 +145,8 @@ def undo_crop(canvas):
         canvas.delete("all")
         canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
 
+        # Hide the Undo Crop button
+        canvas.undo_crop_button.pack_forget()
 
 
 def change_saturation(canvas):
