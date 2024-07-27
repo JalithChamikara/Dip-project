@@ -1,10 +1,24 @@
 import tkinter as tk
 from tkinter import ttk
 from handlers import (
-    add_image, auto_invert, add_censorship , crop_image, undo_crop, save_current_edit,
+    add_image, auto_invert, add_censorship, crop_image, undo_crop, save_current_edit,
     show_brightness_controls, show_contrast_controls, change_saturation, apply_color_mask, detect_faces, reset_brightness, reset_contrast
 )
 from rotate_controls import change_rotate, rotate_image, update_rotate_value, reset_rotate, save_current_edit
+
+def rotate_left(canvas, rotate_slider, rotate_value_label):
+    """Rotate the image 90 degrees to the left."""
+    current_value = rotate_slider.get()
+    new_value = (current_value - 90) % 360
+    rotate_slider.set(new_value)
+    update_rotate_value(canvas, rotate_slider, rotate_value_label)
+
+def rotate_right(canvas, rotate_slider, rotate_value_label):
+    """Rotate the image 90 degrees to the right."""
+    current_value = rotate_slider.get()
+    new_value = (current_value + 90) % 360
+    rotate_slider.set(new_value)
+    update_rotate_value(canvas, rotate_slider, rotate_value_label)
 
 def setup_ui(root):
     # Create the main frame to hold the left and canvas frames
@@ -30,7 +44,7 @@ def setup_ui(root):
     # Brightness slider, label, and reset button
     brightness_slider = ttk.Scale(bottom_frame, from_=0, to=100, orient=tk.HORIZONTAL, length=700)
     brightness_value_label = ttk.Label(bottom_frame, text="50", style="TLabel")
-    reset_brightness_button = ttk.Button(bottom_frame, text="Reset Brightness", 
+    reset_brightness_button = ttk.Button(bottom_frame, text="Reset Brightness",
                                          command=lambda: reset_brightness(canvas, brightness_slider, brightness_value_label))
     save_brightness_button = ttk.Button(bottom_frame, text="✓", width=3,
                                         command=lambda: save_current_edit(canvas))
@@ -38,7 +52,7 @@ def setup_ui(root):
     # Contrast slider, label, and reset button
     contrast_slider = ttk.Scale(bottom_frame, from_=0, to=100, orient=tk.HORIZONTAL, length=700)
     contrast_value_label = ttk.Label(bottom_frame, text="50", style="TLabel")
-    reset_contrast_button = ttk.Button(bottom_frame, text="Reset Contrast", 
+    reset_contrast_button = ttk.Button(bottom_frame, text="Reset Contrast",
                                        command=lambda: reset_contrast(canvas, contrast_slider, contrast_value_label))
     save_contrast_button = ttk.Button(bottom_frame, text="✓", width=3,
                                       command=lambda: save_current_edit(canvas))
@@ -46,10 +60,16 @@ def setup_ui(root):
     # Rotate controls
     rotate_slider = ttk.Scale(bottom_frame, from_=0, to=360, orient=tk.HORIZONTAL, length=700)
     rotate_value_label = ttk.Label(bottom_frame, text="0", style="TLabel")
-    reset_rotate_button = ttk.Button(bottom_frame, text="Reset Rotate", 
+    reset_rotate_button = ttk.Button(bottom_frame, text="Reset Rotate",
                                      command=lambda: reset_rotate(canvas, rotate_slider, rotate_value_label))
     save_rotate_button = ttk.Button(bottom_frame, text="✓", width=3,
                                     command=lambda: save_current_edit(canvas))
+
+    # Add left and right rotate buttons
+    rotate_left_button = ttk.Button(bottom_frame, text=" ← ", width=5,
+                                    command=lambda: rotate_left(canvas, rotate_slider, rotate_value_label))
+    rotate_right_button = ttk.Button(bottom_frame, text=" → ", width=5,
+                                     command=lambda: rotate_right(canvas, rotate_slider, rotate_value_label))
 
     rotate_slider.config(command=lambda v: update_rotate_value(canvas, rotate_slider, rotate_value_label))
 
@@ -82,6 +102,14 @@ def setup_ui(root):
     for text, command in button_texts:
         button = ttk.Button(left_frame, text=text, command=command, style="Custom.TButton")
         button.pack(pady=0.5, padx=5, fill='both')
+
+    # Pack rotate controls
+    rotate_left_button.pack(side="left", padx=(10, 5), pady=5)
+    rotate_slider.pack(side="left", padx=(5, 5), pady=5, fill="x", expand=True)
+    rotate_right_button.pack(side="left", padx=(5, 10), pady=5)
+    rotate_value_label.pack(side="left", padx=(5, 5))
+    reset_rotate_button.pack(side="left", padx=(5, 5))
+    save_rotate_button.pack(side="left", padx=(5, 10))
 
     return canvas, bottom_frame, sliders, {
         "brightness": brightness_value_label,
