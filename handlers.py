@@ -47,36 +47,28 @@ def auto_invert(canvas):
         canvas.image_reference = canvas.image  # Maintain reference to avoid garbage collection
         canvas.update_idletasks()  # Force canvas update
 
-def bypass_censorship(canvas):
-    # Function to bypass censorship
-     if hasattr(canvas, 'image'):
+def add_censorship(canvas):
+    if hasattr(canvas, 'image'):
         pil_image = canvas.original_image.copy()
-        pil_image = pil_image.convert("RGB")  # Ensure the image is in RGB mode
+        pil_image = pil_image.convert("RGB")
         pixel_data = pil_image.load()
         width, height = pil_image.size
 
-        # Iterate over each pixel in the image
         for y in range(height):
             for x in range(width):
-                # Get the RGB values of the pixel
-                r, g, b = pixel_data[x, y]
+                if randint(0, 100) < 25:  # 25% chance to censor a pixel
+                    pixel_data[x, y] = (0, 0, 0)
 
-                # Check if the pixel is censored (e.g., black pixel)
-                if r == 0 and g == 0 and b == 0:
-                    # Replace the censored pixel with a random color
-                    r = randint(0, 255)
-                    g = randint(0, 255)
-                    b = randint(0, 255)
+        # Resize inverted image to fit into canvas while maintaining aspect ratio
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)            
 
-                    # Update the pixel data
-                    pixel_data[x, y] = (r, g, b)
-
-        # Update the canvas image
         canvas.image = ImageTk.PhotoImage(pil_image)
         canvas.delete("all")
         canvas.create_image(canvas.winfo_width() // 2, canvas.winfo_height() // 2, image=canvas.image, anchor="center")
-        canvas.image_reference = canvas.image  # Maintain reference to avoid garbage collection
-        canvas.update_idletasks()  # Force canvas update
+        canvas.image_reference = canvas.image
+        canvas.update_idletasks()
 
 def crop_image(canvas):
     if hasattr(canvas, 'original_image'):

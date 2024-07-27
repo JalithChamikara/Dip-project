@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from handlers import (
-    add_image, auto_invert, bypass_censorship, crop_image, undo_crop, save_current_edit,
+    add_image, auto_invert, add_censorship , crop_image, undo_crop, save_current_edit,
     show_brightness_controls, show_contrast_controls, change_saturation, apply_color_mask, detect_faces, reset_brightness, reset_contrast
 )
 from rotate_controls import change_rotate, rotate_image, update_rotate_value, reset_rotate, save_current_edit
@@ -63,7 +63,7 @@ def setup_ui(root):
     button_texts = [
         ("Open Image", lambda: add_image(canvas)),
         ("Auto Invert", lambda: auto_invert(canvas)),
-        ("Bypass Censorship", lambda: bypass_censorship(canvas)),
+        ("Add Censorship", lambda: add_censorship(canvas)),
         ("Rotate Image", lambda: rotate_image(canvas, bottom_frame, sliders)),
         ("Crop Image", lambda: crop_image(canvas)),
         ("Undo Crop", lambda: undo_crop(canvas)),
