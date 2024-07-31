@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from handlers import (
     add_image, auto_invert, add_censorship, crop_image, undo_crop, save_current_edit,
-    show_brightness_controls, show_contrast_controls, change_saturation_high_level,change_saturation_low_level, apply_color_mask, detect_faces, reset_brightness, reset_contrast
+    show_brightness_controls, show_contrast_controls, change_saturation, reset_saturation, show_saturation_controls, apply_color_mask, detect_faces, reset_brightness, reset_contrast
 )
 from rotate_controls import change_rotate, rotate_image, update_rotate_value, reset_rotate, save_current_edit
 
@@ -77,6 +77,15 @@ def setup_ui(root):
     undo_crop_button = ttk.Button(bottom_frame, text="Undo Crop", command=lambda: undo_crop(canvas))
     undo_crop_button.pack(side="left", padx=10)
     undo_crop_button.pack_forget()  # Hide initially
+    
+    # Saturation slider, label, and reset button
+    saturation_slider = ttk.Scale(bottom_frame, from_=0, to=100, orient=tk.HORIZONTAL, length=700)
+    saturation_value_label = ttk.Label(bottom_frame, text="50", style="TLabel")
+    reset_saturation_button = ttk.Button(bottom_frame, text="Reset Saturation",
+                                         command=lambda: reset_saturation(canvas, saturation_slider, saturation_value_label))
+    save_saturation_button = ttk.Button(bottom_frame, text="✓", width=3,
+                                        command=lambda: save_current_edit(canvas))
+
 
 
 
@@ -84,6 +93,7 @@ def setup_ui(root):
     sliders = {
         "brightness": (brightness_slider, brightness_value_label, reset_brightness_button, save_brightness_button),
         "contrast": (contrast_slider, contrast_value_label, reset_contrast_button, save_contrast_button),
+        "saturation": (saturation_slider, saturation_value_label, reset_saturation_button, save_saturation_button),
         "rotate": (rotate_slider, rotate_value_label, reset_rotate_button, save_rotate_button)
 
     }
@@ -98,8 +108,7 @@ def setup_ui(root):
         ("Undo Crop", lambda: undo_crop(canvas)),
         ("Change Brightness", lambda: show_brightness_controls(canvas, bottom_frame, sliders)),
         ("Change Contrast", lambda: show_contrast_controls(canvas, bottom_frame, sliders)),
-        ("Change Saturation(High level)", lambda: change_saturation_high_level(canvas,saturation_level=2)),
-        ("Change Saturation(Low level)", lambda: change_saturation_high_level(canvas,saturation_level=-2)),
+        ("Change Saturation", lambda: show_saturation_controls(canvas, bottom_frame, sliders)),
         ("Color Mask", lambda: apply_color_mask(canvas)),
         ("Face Detection", lambda: detect_faces(canvas))
     ]
@@ -118,9 +127,11 @@ def setup_ui(root):
 
     return canvas, bottom_frame, sliders, {
         "brightness": brightness_value_label,
+        "saturation": saturation_value_label,
         "contrast": contrast_value_label
     }, {
         "brightness": reset_brightness_button,
         "contrast": reset_contrast_button,
+        "saturation": reset_saturation_button,
         "undo_crop": undo_crop_button
     }

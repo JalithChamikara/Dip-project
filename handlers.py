@@ -32,7 +32,7 @@ def add_image(canvas):
 
 def auto_invert(canvas):
     # Auto invert the image
- if hasattr(canvas, 'original_image'):
+    if hasattr(canvas, 'original_image'):
         pil_image = canvas.original_image.copy()
         inverted_image = ImageOps.invert(pil_image)
 
@@ -48,7 +48,7 @@ def auto_invert(canvas):
         canvas.update_idletasks()  # Force canvas update
 
 def add_censorship(canvas):
-      if hasattr(canvas, 'image'):
+    if hasattr(canvas, 'image'):
         pil_image = canvas.original_image.copy()
         pil_image = pil_image.convert("RGB")
         
@@ -149,15 +149,32 @@ def undo_crop(canvas):
         canvas.undo_crop_button.pack_forget()
 
 
+def show_saturation_controls(canvas, bottom_frame, sliders):
+    if not bottom_frame.winfo_ismapped():
+        bottom_frame.pack(side="bottom", fill="x", pady=10)
+    for slider, label, reset_button, save_button in sliders.values():
+        slider.pack_forget()
+        label.pack_forget()
+        reset_button.pack_forget()
+        save_button.pack_forget()
+    saturation_slider, saturation_value_label, reset_saturation_button, save_saturation_button = sliders["saturation"]
+    saturation_slider.pack(side="left", padx=20)
+    saturation_value_label.pack(side="left", padx=10)
+    reset_saturation_button.pack(side="left", padx=10)
+    save_saturation_button.pack(side="left", padx=10)
+    saturation_slider.set(50)
+    saturation_value_label.config(text="50")
+    change_saturation(canvas, 50)
+    saturation_slider.bind("<Motion>", lambda event: update_saturation_value(canvas, saturation_slider, saturation_value_label))
 
-def change_saturation_high_level(canvas, saturation_level):
-    # Function to change saturation
-   if hasattr(canvas, 'original_image'):
+
+def change_saturation(canvas, saturation_value):
+    if hasattr(canvas, 'original_image'):
         pil_image = canvas.original_image.copy()
         
         # Enhance the saturation
         enhancer = ImageEnhance.Color(pil_image)
-        pil_image = enhancer.enhance(saturation_level)
+        pil_image = enhancer.enhance(saturation_value / 50.0)  # Scale 0-100 slider to 0-2 for enhancement
         
         # Resize the image to fit into the canvas while maintaining aspect ratio
         canvas_width = canvas.winfo_width()
@@ -170,26 +187,15 @@ def change_saturation_high_level(canvas, saturation_level):
         canvas.image_reference = canvas.image  # Maintain reference to avoid garbage collection
         canvas.update_idletasks()  # Force canvas update
 
-def change_saturation_low_level(canvas, saturation_level):
-    # Function to change saturation
-   if hasattr(canvas, 'original_image'):
-        pil_image = canvas.original_image.copy()
-        
-        # Enhance the saturation
-        enhancer = ImageEnhance.Color(pil_image)
-        pil_image = enhancer.enhance(saturation_level)
-        
-        # Resize the image to fit into the canvas while maintaining aspect ratio
-        canvas_width = canvas.winfo_width()
-        canvas_height = canvas.winfo_height()
-        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
-        
-        canvas.image = ImageTk.PhotoImage(pil_image)
-        canvas.delete("all")
-        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
-        canvas.image_reference = canvas.image  # Maintain reference to avoid garbage collection
-        canvas.update_idletasks()  # Force canvas update
+def update_saturation_value(canvas, saturation_slider, saturation_value_label):
+    saturation_value = saturation_slider.get()
+    saturation_value_label.config(text=str(int(saturation_value)))
+    change_saturation(canvas, saturation_value)
 
+def reset_saturation(canvas, saturation_slider, saturation_value_label):
+    saturation_slider.set(50)
+    saturation_value_label.config(text="50")
+    change_saturation(canvas, 50)
 
 
 def apply_color_mask(canvas):
