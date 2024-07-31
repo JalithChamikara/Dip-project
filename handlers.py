@@ -150,7 +150,7 @@ def undo_crop(canvas):
 
 
 
-def change_saturation(canvas, saturation_level):
+def change_saturation_high_level(canvas, saturation_level):
     # Function to change saturation
    if hasattr(canvas, 'original_image'):
         pil_image = canvas.original_image.copy()
@@ -169,6 +169,28 @@ def change_saturation(canvas, saturation_level):
         canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
         canvas.image_reference = canvas.image  # Maintain reference to avoid garbage collection
         canvas.update_idletasks()  # Force canvas update
+
+def change_saturation_low_level(canvas, saturation_level):
+    # Function to change saturation
+   if hasattr(canvas, 'original_image'):
+        pil_image = canvas.original_image.copy()
+        
+        # Enhance the saturation
+        enhancer = ImageEnhance.Color(pil_image)
+        pil_image = enhancer.enhance(saturation_level)
+        
+        # Resize the image to fit into the canvas while maintaining aspect ratio
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
+        
+        canvas.image = ImageTk.PhotoImage(pil_image)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+        canvas.image_reference = canvas.image  # Maintain reference to avoid garbage collection
+        canvas.update_idletasks()  # Force canvas update
+
+
 
 def apply_color_mask(canvas):
     # Function to apply color mask
