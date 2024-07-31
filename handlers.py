@@ -1,6 +1,6 @@
 from random import randint
 from tkinter import filedialog, ttk
-from PIL import Image, ImageTk,ImageOps,ImageFilter
+from PIL import Image, ImageTk,ImageOps,ImageFilter,ImageEnhance
 import cv2
 import numpy as np
 from image_operations import (
@@ -149,9 +149,26 @@ def undo_crop(canvas):
         canvas.undo_crop_button.pack_forget()
 
 
-def change_saturation(canvas):
+
+def change_saturation(canvas, saturation_level):
     # Function to change saturation
-    pass
+   if hasattr(canvas, 'original_image'):
+        pil_image = canvas.original_image.copy()
+        
+        # Enhance the saturation
+        enhancer = ImageEnhance.Color(pil_image)
+        pil_image = enhancer.enhance(saturation_level)
+        
+        # Resize the image to fit into the canvas while maintaining aspect ratio
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
+        
+        canvas.image = ImageTk.PhotoImage(pil_image)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+        canvas.image_reference = canvas.image  # Maintain reference to avoid garbage collection
+        canvas.update_idletasks()  # Force canvas update
 
 def apply_color_mask(canvas):
     # Function to apply color mask
