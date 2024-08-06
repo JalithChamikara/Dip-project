@@ -1,6 +1,6 @@
 from random import randint
 from tkinter import filedialog, ttk
-from PIL import Image, ImageTk,ImageOps
+from PIL import Image, ImageTk,ImageOps,ImageFilter,ImageEnhance
 import cv2
 import numpy as np
 from image_operations import (
@@ -32,7 +32,7 @@ def add_image(canvas):
 
 def auto_invert(canvas):
     # Auto invert the image
- if hasattr(canvas, 'original_image'):
+    if hasattr(canvas, 'original_image'):
         pil_image = canvas.original_image.copy()
         inverted_image = ImageOps.invert(pil_image)
 
@@ -47,39 +47,47 @@ def auto_invert(canvas):
         canvas.image_reference = canvas.image  # Maintain reference to avoid garbage collection
         canvas.update_idletasks()  # Force canvas update
 
-def bypass_censorship(canvas):
-    # Function to bypass censorship
-     if hasattr(canvas, 'image'):
+def add_censorship(canvas):
+    if hasattr(canvas, 'image'):
         pil_image = canvas.original_image.copy()
-        pil_image = pil_image.convert("RGB")  # Ensure the image is in RGB mode
-        pixel_data = pil_image.load()
-        width, height = pil_image.size
+        pil_image = pil_image.convert("RGB")
+        
+        # Convert PIL image to OpenCV format
+        open_cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+        
+        # Load the pre-trained Haar Cascade classifier for face detection
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        
+        # Detect faces in the image
+        gray = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+        
+        # Apply blur to each face region
+        for (x, y, w, h) in faces:
+            face = open_cv_image[y:y+h, x:x+w]
+            face = cv2.GaussianBlur(face, (99, 99), 30)  # Adjust kernel size for more or less blur
+            open_cv_image[y:y+h, x:x+w] = face
+        
+        # Convert OpenCV image back to PIL format
+        pil_image = Image.fromarray(cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2RGB))
+        
+        # Resize the blurred image to fit into canvas while maintaining aspect ratio
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
 
-        # Iterate over each pixel in the image
-        for y in range(height):
-            for x in range(width):
-                # Get the RGB values of the pixel
-                r, g, b = pixel_data[x, y]
-
-                # Check if the pixel is censored (e.g., black pixel)
-                if r == 0 and g == 0 and b == 0:
-                    # Replace the censored pixel with a random color
-                    r = randint(0, 255)
-                    g = randint(0, 255)
-                    b = randint(0, 255)
-
-                    # Update the pixel data
-                    pixel_data[x, y] = (r, g, b)
-
-        # Update the canvas image
         canvas.image = ImageTk.PhotoImage(pil_image)
         canvas.delete("all")
         canvas.create_image(canvas.winfo_width() // 2, canvas.winfo_height() // 2, image=canvas.image, anchor="center")
-        canvas.image_reference = canvas.image  # Maintain reference to avoid garbage collection
-        canvas.update_idletasks()  # Force canvas update
+        canvas.image_reference = canvas.image
+        canvas.update_idletasks()
 
 def crop_image(canvas):
     if hasattr(canvas, 'original_image'):
+        # Set cursor to plus sign
+        canvas.config(cursor="plus")
+
+        # Bind mouse events for cropping
         canvas.bind("<ButtonPress-1>", lambda event: start_crop(event, canvas))
         canvas.bind("<B1-Motion>", lambda event: draw_crop_rect(event, canvas))
         canvas.bind("<ButtonRelease-1>", lambda event: finish_crop(event, canvas))
@@ -96,6 +104,9 @@ def finish_crop(event, canvas):
     canvas.crop_end_x = event.x
     canvas.crop_end_y = event.y
     canvas.delete(canvas.crop_rect)
+
+    # Restore the cursor to default
+    canvas.config(cursor="")
 
     if hasattr(canvas, 'original_image'):
         if not hasattr(canvas, 'crop_history'):
@@ -120,7 +131,7 @@ def finish_crop(event, canvas):
         canvas.image = ImageTk.PhotoImage(cropped_image)
         canvas.delete("all")
         canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
-
+        
 def undo_crop(canvas):
     if hasattr(canvas, 'crop_history') and canvas.crop_history:
         canvas.original_image = canvas.crop_history.pop()
@@ -134,11 +145,58 @@ def undo_crop(canvas):
         canvas.delete("all")
         canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
 
+        # Hide the Undo Crop button
+        canvas.undo_crop_button.pack_forget()
 
 
-def change_saturation(canvas):
-    # Function to change saturation
-    pass
+def show_saturation_controls(canvas, bottom_frame, sliders):
+    if not bottom_frame.winfo_ismapped():
+        bottom_frame.pack(side="bottom", fill="x", pady=10)
+    for slider, label, reset_button, save_button in sliders.values():
+        slider.pack_forget()
+        label.pack_forget()
+        reset_button.pack_forget()
+        save_button.pack_forget()
+    saturation_slider, saturation_value_label, reset_saturation_button, save_saturation_button = sliders["saturation"]
+    saturation_slider.pack(side="left", padx=20)
+    saturation_value_label.pack(side="left", padx=10)
+    reset_saturation_button.pack(side="left", padx=10)
+    save_saturation_button.pack(side="left", padx=10)
+    saturation_slider.set(50)
+    saturation_value_label.config(text="50")
+    change_saturation(canvas, 50)
+    saturation_slider.bind("<Motion>", lambda event: update_saturation_value(canvas, saturation_slider, saturation_value_label))
+
+
+def change_saturation(canvas, saturation_value):
+    if hasattr(canvas, 'original_image'):
+        pil_image = canvas.original_image.copy()
+        
+        # Enhance the saturation
+        enhancer = ImageEnhance.Color(pil_image)
+        pil_image = enhancer.enhance(saturation_value / 50.0)  # Scale 0-100 slider to 0-2 for enhancement
+        
+        # Resize the image to fit into the canvas while maintaining aspect ratio
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
+        
+        canvas.image = ImageTk.PhotoImage(pil_image)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+        canvas.image_reference = canvas.image  # Maintain reference to avoid garbage collection
+        canvas.update_idletasks()  # Force canvas update
+
+def update_saturation_value(canvas, saturation_slider, saturation_value_label):
+    saturation_value = saturation_slider.get()
+    saturation_value_label.config(text=str(int(saturation_value)))
+    change_saturation(canvas, saturation_value)
+
+def reset_saturation(canvas, saturation_slider, saturation_value_label):
+    saturation_slider.set(50)
+    saturation_value_label.config(text="50")
+    change_saturation(canvas, 50)
+
 
 def apply_color_mask(canvas):
     # Function to apply color mask
