@@ -356,3 +356,21 @@ def reset_contrast(canvas, contrast_slider, contrast_value_label):
 def save_current_edit(canvas):
     if hasattr(canvas, 'image'):
         canvas.current_image = ImageTk.getimage(canvas.image)    
+
+def save_image(canvas):
+    if hasattr(canvas, 'image'):
+        # Get the current image from the canvas
+        current_image = ImageTk.getimage(canvas.image)
+        
+        # Open a file dialog to choose where to save the image
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".png",
+            filetypes=[("PNG files", "*.png"), ("JPEG files", "*.jpg"), ("All files", "*.*")]
+        )
+        
+        if file_path:
+            # Save the image to the chosen file path
+            current_image.save(file_path)
+            print(f"Image saved to {file_path}")
+    else:
+        print("No image to save")
