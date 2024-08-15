@@ -1,6 +1,7 @@
 from random import randint
 from tkinter import filedialog, ttk
 from PIL import Image, ImageTk,ImageOps,ImageFilter,ImageEnhance
+from PIL import ImageFilter
 import cv2
 import numpy as np
 from image_operations import (
@@ -375,6 +376,24 @@ def reset_contrast(canvas, contrast_slider, contrast_value_label):
     contrast_slider.set(50)
     contrast_value_label.config(text="50")
     change_contrast(canvas, 50)
+    
+def apply_emboss(canvas):
+    if hasattr(canvas, 'original_image'):
+        pil_image = canvas.original_image.copy()
+        
+        # Apply emboss filter
+        embossed_image = pil_image.filter(ImageFilter.EMBOSS)
+        
+        # Resize the embossed image to fit into canvas while maintaining aspect ratio
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        embossed_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
+
+        canvas.image = ImageTk.PhotoImage(embossed_image)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+        canvas.image_reference = canvas.image
+        canvas.update_idletasks()
 
 def save_current_edit(canvas):
     if hasattr(canvas, 'image'):

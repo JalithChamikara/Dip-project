@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from handlers import (
     add_image, auto_invert, add_censorship, crop_image, undo_crop, save_current_edit,save_image,
-    show_brightness_controls, show_contrast_controls, change_saturation, reset_saturation, show_saturation_controls, apply_edge_detection, detect_faces, reset_brightness, reset_contrast
+    show_brightness_controls, show_contrast_controls, change_saturation, reset_saturation, show_saturation_controls, apply_edge_detection, apply_emboss, detect_faces, reset_brightness, reset_contrast
 )
 from rotate_controls import change_rotate, rotate_image, update_rotate_value, reset_rotate, save_current_edit
 
@@ -87,15 +87,11 @@ def setup_ui(root):
                                         command=lambda: save_current_edit(canvas))
 
 
-
-
-
     sliders = {
         "brightness": (brightness_slider, brightness_value_label, reset_brightness_button, save_brightness_button),
         "contrast": (contrast_slider, contrast_value_label, reset_contrast_button, save_contrast_button),
         "saturation": (saturation_slider, saturation_value_label, reset_saturation_button, save_saturation_button),
         "rotate": (rotate_slider, rotate_value_label, reset_rotate_button, save_rotate_button)
-
     }
 
     # Add buttons and bind them to the functions
@@ -109,7 +105,8 @@ def setup_ui(root):
         ("Change Brightness", lambda: show_brightness_controls(canvas, bottom_frame, sliders)),
         ("Change Contrast", lambda: show_contrast_controls(canvas, bottom_frame, sliders)),
         ("Change Saturation", lambda: show_saturation_controls(canvas, bottom_frame, sliders)),
-        ("Edge Detection", lambda: apply_edge_detection(canvas)),  # Add this line
+        ("Edge Detection", lambda: apply_edge_detection(canvas)),
+        ("Emboss", lambda: apply_emboss(canvas)),
         ("Face Detection", lambda: detect_faces(canvas)),
         ("Save Image", lambda: save_image(canvas))
     ]
@@ -129,7 +126,7 @@ def setup_ui(root):
     return canvas, bottom_frame, sliders, {
         "brightness": brightness_value_label,
         "saturation": saturation_value_label,
-        "contrast": contrast_value_label
+        "contrast": contrast_value_label,
     }, {
         "brightness": reset_brightness_button,
         "contrast": reset_contrast_button,
