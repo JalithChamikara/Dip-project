@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from handlers import (
     add_image, auto_invert, add_censorship, crop_image, undo_crop, save_current_edit,save_image,
-    show_brightness_controls, show_contrast_controls, change_saturation, reset_saturation, show_saturation_controls, apply_color_mask, detect_faces, reset_brightness, reset_contrast
+    show_brightness_controls, show_contrast_controls, change_saturation, reset_saturation, show_saturation_controls, apply_edge_detection, detect_faces, reset_brightness, reset_contrast
 )
 from rotate_controls import change_rotate, rotate_image, update_rotate_value, reset_rotate, save_current_edit
 
@@ -109,7 +109,7 @@ def setup_ui(root):
         ("Change Brightness", lambda: show_brightness_controls(canvas, bottom_frame, sliders)),
         ("Change Contrast", lambda: show_contrast_controls(canvas, bottom_frame, sliders)),
         ("Change Saturation", lambda: show_saturation_controls(canvas, bottom_frame, sliders)),
-        ("Color Mask", lambda: apply_color_mask(canvas)),
+        ("Edge Detection", lambda: apply_edge_detection(canvas)),  # Add this line
         ("Face Detection", lambda: detect_faces(canvas)),
         ("Save Image", lambda: save_image(canvas))
     ]

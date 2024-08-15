@@ -198,9 +198,32 @@ def reset_saturation(canvas, saturation_slider, saturation_value_label):
     change_saturation(canvas, 50)
 
 
-def apply_color_mask(canvas):
-    # Function to apply color mask
-    pass
+def apply_edge_detection(canvas):
+    if hasattr(canvas, 'original_image'):
+        pil_image = canvas.original_image.copy()
+        
+        # Convert PIL image to OpenCV format
+        open_cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+        
+        # Apply edge detection using Canny
+        edges = cv2.Canny(open_cv_image, 100, 200)
+        
+        # Convert edges to 3-channel image
+        edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB)
+        
+        # Convert OpenCV image back to PIL format
+        pil_image_with_edges = Image.fromarray(edges)
+        
+        # Resize the edge-detected image to fit into the canvas while maintaining aspect ratio
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        pil_image_with_edges.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
+        
+        canvas.image = ImageTk.PhotoImage(pil_image_with_edges)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+        canvas.image_reference = canvas.image
+        canvas.update_idletasks()
 
 
 def detect_faces(canvas):
