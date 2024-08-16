@@ -5,7 +5,7 @@ from ui import setup_ui
 def main():
     # Initialize the main application window
     root = tk.Tk()
-    root.geometry("1000x600")
+    root.geometry("1050x600")
     root.title("Image Editor")
     root.config(bg="#2e2e2e")
 

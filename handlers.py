@@ -1,6 +1,7 @@
 from random import randint
 from tkinter import filedialog, ttk
 from PIL import Image, ImageTk,ImageOps,ImageFilter,ImageEnhance
+from PIL import ImageFilter
 import cv2
 import numpy as np
 from image_operations import (
@@ -198,9 +199,32 @@ def reset_saturation(canvas, saturation_slider, saturation_value_label):
     change_saturation(canvas, 50)
 
 
-def apply_color_mask(canvas):
-    # Function to apply color mask
-    pass
+def apply_edge_detection(canvas):
+    if hasattr(canvas, 'original_image'):
+        pil_image = canvas.original_image.copy()
+        
+        # Convert PIL image to OpenCV format
+        open_cv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+        
+        # Apply edge detection using Canny
+        edges = cv2.Canny(open_cv_image, 100, 200)
+        
+        # Convert edges to 3-channel image
+        edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2RGB)
+        
+        # Convert OpenCV image back to PIL format
+        pil_image_with_edges = Image.fromarray(edges)
+        
+        # Resize the edge-detected image to fit into the canvas while maintaining aspect ratio
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        pil_image_with_edges.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
+        
+        canvas.image = ImageTk.PhotoImage(pil_image_with_edges)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+        canvas.image_reference = canvas.image
+        canvas.update_idletasks()
 
 
 def detect_faces(canvas):
@@ -352,7 +376,94 @@ def reset_contrast(canvas, contrast_slider, contrast_value_label):
     contrast_slider.set(50)
     contrast_value_label.config(text="50")
     change_contrast(canvas, 50)
+    
+def apply_emboss(canvas):
+    if hasattr(canvas, 'original_image'):
+        pil_image = canvas.original_image.copy()
+        
+        # Apply emboss filter
+        embossed_image = pil_image.filter(ImageFilter.EMBOSS)
+        
+        # Resize the embossed image to fit into canvas while maintaining aspect ratio
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        embossed_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
+
+        canvas.image = ImageTk.PhotoImage(embossed_image)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+        canvas.image_reference = canvas.image
+        canvas.update_idletasks()
+        
+def apply_blur_sharpen(canvas, value):
+    if hasattr(canvas, 'original_image'):
+        pil_image = canvas.original_image.copy()
+        
+        if value < 50:
+            factor = (50 - value) / 10.0  # Sharpen factor
+            enhancer = ImageEnhance.Sharpness(pil_image)
+            pil_image = enhancer.enhance(1 + factor)
+        elif value > 50:
+            factor = (value - 50) / 50.0  # Blur factor
+            pil_image = pil_image.filter(ImageFilter.GaussianBlur(radius=factor * 5))
+
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
+        
+        canvas.image = ImageTk.PhotoImage(pil_image)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+        canvas.image_reference = canvas.image
+        canvas.update_idletasks()
+
+def show_blur_sharpen_controls(canvas, bottom_frame, sliders):
+    if not bottom_frame.winfo_ismapped():
+        bottom_frame.pack(side="bottom", fill="x", pady=10)
+    for slider, label, reset_button, save_button in sliders.values():
+        slider.pack_forget()
+        label.pack_forget()
+        reset_button.pack_forget()
+        save_button.pack_forget()
+    blur_sharpen_slider, blur_sharpen_value_label, reset_blur_sharpen_button, save_blur_sharpen_button = sliders["blur_sharpen"]
+    blur_sharpen_slider.pack(side="left", padx=20)
+    blur_sharpen_value_label.pack(side="left", padx=10)
+    reset_blur_sharpen_button.pack(side="left", padx=10)
+    save_blur_sharpen_button.pack(side="left", padx=10)
+    blur_sharpen_slider.set(50)
+    blur_sharpen_value_label.config(text="50")
+    apply_blur_sharpen(canvas, 50)
+    blur_sharpen_slider.bind("<Motion>", lambda event: update_blur_sharpen_value(canvas, blur_sharpen_slider, blur_sharpen_value_label))
+
+def update_blur_sharpen_value(canvas, blur_sharpen_slider, blur_sharpen_value_label):
+    blur_sharpen_value = blur_sharpen_slider.get()
+    blur_sharpen_value_label.config(text=str(int(blur_sharpen_value)))
+    apply_blur_sharpen(canvas, blur_sharpen_value)
+
+def reset_blur_sharpen(canvas, blur_sharpen_slider, blur_sharpen_value_label):
+    blur_sharpen_slider.set(50)
+    blur_sharpen_value_label.config(text="50")
+    apply_blur_sharpen(canvas, 50)
+
 
 def save_current_edit(canvas):
     if hasattr(canvas, 'image'):
         canvas.current_image = ImageTk.getimage(canvas.image)    
+
+def save_image(canvas):
+    if hasattr(canvas, 'image'):
+        # Get the current image from the canvas
+        current_image = ImageTk.getimage(canvas.image)
+        
+        # Open a file dialog to choose where to save the image
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".png",
+            filetypes=[("PNG files", "*.png"), ("JPEG files", "*.jpg"), ("All files", "*.*")]
+        )
+        
+        if file_path:
+            # Save the image to the chosen file path
+            current_image.save(file_path)
+            print(f"Image saved to {file_path}")
+    else:
+        print("No image to save")

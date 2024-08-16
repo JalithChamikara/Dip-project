@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from handlers import (
-    add_image, auto_invert, add_censorship, crop_image, undo_crop, save_current_edit,
-    show_brightness_controls, show_contrast_controls, change_saturation, reset_saturation, show_saturation_controls, apply_color_mask, detect_faces, reset_brightness, reset_contrast
+    add_image, auto_invert, add_censorship, crop_image, undo_crop, save_current_edit,save_image,
+    show_brightness_controls, show_contrast_controls, change_saturation, reset_saturation, show_saturation_controls, apply_edge_detection, apply_emboss, reset_blur_sharpen, show_blur_sharpen_controls, update_blur_sharpen_value, detect_faces, reset_brightness, reset_contrast
 )
 from rotate_controls import change_rotate, rotate_image, update_rotate_value, reset_rotate, save_current_edit
 
@@ -86,17 +86,32 @@ def setup_ui(root):
     save_saturation_button = ttk.Button(bottom_frame, text="✓", width=3,
                                         command=lambda: save_current_edit(canvas))
 
+    # Combined blur/sharpen slider and button
+    blur_sharpen_slider = ttk.Scale(bottom_frame, from_=0, to=100, orient=tk.HORIZONTAL, length=700)
+    blur_sharpen_value_label = ttk.Label(bottom_frame, text="50", style="TLabel")
+    reset_blur_sharpen_button = ttk.Button(bottom_frame, text="Reset Blur/Sharpen",
+                                           command=lambda: reset_blur_sharpen(canvas, blur_sharpen_slider, blur_sharpen_value_label))
+    save_blur_sharpen_button = ttk.Button(bottom_frame, text="✓", width=3,
+                                          command=lambda: save_current_edit(canvas))
 
+    # Bind slider to update image
+    blur_sharpen_slider.bind("<Motion>", lambda event: update_blur_sharpen_value(canvas, blur_sharpen_slider, blur_sharpen_value_label))
 
+    # Pack combined blur/sharpen controls
+    blur_sharpen_slider.pack(side="left", padx=20)
+    blur_sharpen_value_label.pack(side="left", padx=10)
+    reset_blur_sharpen_button.pack(side="left", padx=10)
+    save_blur_sharpen_button.pack(side="left", padx=10)
 
+    
 
     sliders = {
         "brightness": (brightness_slider, brightness_value_label, reset_brightness_button, save_brightness_button),
         "contrast": (contrast_slider, contrast_value_label, reset_contrast_button, save_contrast_button),
         "saturation": (saturation_slider, saturation_value_label, reset_saturation_button, save_saturation_button),
-        "rotate": (rotate_slider, rotate_value_label, reset_rotate_button, save_rotate_button)
-
-    }
+        "rotate": (rotate_slider, rotate_value_label, reset_rotate_button, save_rotate_button),
+        "blur_sharpen": (blur_sharpen_slider, blur_sharpen_value_label, reset_blur_sharpen_button, save_blur_sharpen_button),
+   }
 
     # Add buttons and bind them to the functions
     button_texts = [
@@ -109,8 +124,11 @@ def setup_ui(root):
         ("Change Brightness", lambda: show_brightness_controls(canvas, bottom_frame, sliders)),
         ("Change Contrast", lambda: show_contrast_controls(canvas, bottom_frame, sliders)),
         ("Change Saturation", lambda: show_saturation_controls(canvas, bottom_frame, sliders)),
-        ("Color Mask", lambda: apply_color_mask(canvas)),
-        ("Face Detection", lambda: detect_faces(canvas))
+        ("Edge Detection", lambda: apply_edge_detection(canvas)),
+        ("Emboss", lambda: apply_emboss(canvas)),
+        ("Blur/Sharpen", lambda: show_blur_sharpen_controls(canvas, bottom_frame, sliders)),
+        ("Face Detection", lambda: detect_faces(canvas)),
+        ("Save Image", lambda: save_image(canvas))
     ]
 
     for text, command in button_texts:
@@ -128,10 +146,12 @@ def setup_ui(root):
     return canvas, bottom_frame, sliders, {
         "brightness": brightness_value_label,
         "saturation": saturation_value_label,
-        "contrast": contrast_value_label
+        "contrast": contrast_value_label,
+        "blur_sharpen": blur_sharpen_value_label
     }, {
         "brightness": reset_brightness_button,
         "contrast": reset_contrast_button,
         "saturation": reset_saturation_button,
-        "undo_crop": undo_crop_button
+        "undo_crop": undo_crop_button,
+        "blur_sharpen": reset_blur_sharpen_button
     }
