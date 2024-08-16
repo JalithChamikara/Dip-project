@@ -394,6 +394,57 @@ def apply_emboss(canvas):
         canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
         canvas.image_reference = canvas.image
         canvas.update_idletasks()
+        
+def apply_blur_sharpen(canvas, value):
+    if hasattr(canvas, 'original_image'):
+        pil_image = canvas.original_image.copy()
+        
+        if value < 50:
+            factor = (50 - value) / 10.0  # Sharpen factor
+            enhancer = ImageEnhance.Sharpness(pil_image)
+            pil_image = enhancer.enhance(1 + factor)
+        elif value > 50:
+            factor = (value - 50) / 50.0  # Blur factor
+            pil_image = pil_image.filter(ImageFilter.GaussianBlur(radius=factor * 5))
+
+        canvas_width = canvas.winfo_width()
+        canvas_height = canvas.winfo_height()
+        pil_image.thumbnail((canvas_width, canvas_height), Image.LANCZOS)
+        
+        canvas.image = ImageTk.PhotoImage(pil_image)
+        canvas.delete("all")
+        canvas.create_image(canvas_width // 2, canvas_height // 2, image=canvas.image, anchor="center")
+        canvas.image_reference = canvas.image
+        canvas.update_idletasks()
+
+def show_blur_sharpen_controls(canvas, bottom_frame, sliders):
+    if not bottom_frame.winfo_ismapped():
+        bottom_frame.pack(side="bottom", fill="x", pady=10)
+    for slider, label, reset_button, save_button in sliders.values():
+        slider.pack_forget()
+        label.pack_forget()
+        reset_button.pack_forget()
+        save_button.pack_forget()
+    blur_sharpen_slider, blur_sharpen_value_label, reset_blur_sharpen_button, save_blur_sharpen_button = sliders["blur_sharpen"]
+    blur_sharpen_slider.pack(side="left", padx=20)
+    blur_sharpen_value_label.pack(side="left", padx=10)
+    reset_blur_sharpen_button.pack(side="left", padx=10)
+    save_blur_sharpen_button.pack(side="left", padx=10)
+    blur_sharpen_slider.set(50)
+    blur_sharpen_value_label.config(text="50")
+    apply_blur_sharpen(canvas, 50)
+    blur_sharpen_slider.bind("<Motion>", lambda event: update_blur_sharpen_value(canvas, blur_sharpen_slider, blur_sharpen_value_label))
+
+def update_blur_sharpen_value(canvas, blur_sharpen_slider, blur_sharpen_value_label):
+    blur_sharpen_value = blur_sharpen_slider.get()
+    blur_sharpen_value_label.config(text=str(int(blur_sharpen_value)))
+    apply_blur_sharpen(canvas, blur_sharpen_value)
+
+def reset_blur_sharpen(canvas, blur_sharpen_slider, blur_sharpen_value_label):
+    blur_sharpen_slider.set(50)
+    blur_sharpen_value_label.config(text="50")
+    apply_blur_sharpen(canvas, 50)
+
 
 def save_current_edit(canvas):
     if hasattr(canvas, 'image'):
