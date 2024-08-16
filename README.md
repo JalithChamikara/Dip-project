@@ -1,4 +1,3 @@
-# Imageeditor
 # Image Editor Application
 
 This is a simple image editor application built using Python and the Tkinter library. The application allows users to perform various image editing operations such as rotating, cropping, adjusting brightness and contrast, applying filters, and more.
